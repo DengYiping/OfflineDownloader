@@ -1,0 +1,12 @@
+language: scala
+scala:
+   - 2.12.3
+branches:
+  only:
+    - master
+jdk:
+  - oraclejdk8
+before_script:
+  - sleep 10
+script:
+  - sbt compile
