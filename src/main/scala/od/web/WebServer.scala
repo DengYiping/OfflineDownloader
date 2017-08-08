@@ -3,7 +3,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.Http
 import od.auxiliary.ConfigLoad
-import od.dao.DriverLoader
+
 
 import scala.io.StdIn
 import scala.concurrent.Future
@@ -13,9 +13,6 @@ object WebServer {
     implicit val system = ActorSystem("od")
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
-
-    //preparing data access layer
-    DriverLoader.load()
 
     //run http service
     val route = WebRoute.route

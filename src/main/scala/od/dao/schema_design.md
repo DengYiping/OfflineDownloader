@@ -14,6 +14,7 @@ USE od;
 CREATE TABLE `offlinefile` (`id` INTEGER AUTO_INCREMENT PRIMARY KEY,
  `hash` CHAR(40) NOT NULL,
  `size` INTEGER,
+ `name` VARCHAR(100),
  `create_time` TIMESTAMP DEFAULT NOW());
 ```
 
