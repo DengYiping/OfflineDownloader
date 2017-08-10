@@ -85,6 +85,7 @@ class DBConnectionPool(jdbcDriver:String, url:String, username:String, password:
 
       //spin up the connection pool
       connPool = new BoneCP(config)
+      log.info("Connection pool successfully created.")
     } catch {
       case ex:Exception =>
         log.error("Error in building a connection pool, system will shutdown, please quit")

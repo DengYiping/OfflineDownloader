@@ -14,7 +14,23 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 import scala.concurrent.duration._
 object FileInfoInserter{
-  case class FileInfo(hash:String, size:Int, name: String)
+  case class FileInfo(hash:String, size:Int, name: String){
+    @throws[Exception]
+    def insert(conn:Connection): Int ={
+      //prepare statement
+      autoClose(conn.prepareStatement("INSERT INTO offlinefile (hash, size, name) VALUES (?, ?, ?)")){
+        stmt =>
+          stmt.setString(1,hash)
+          stmt.setInt(2,size)
+          stmt.setString(3,name)
+
+          //insert
+          stmt.executeUpdate()
+      }
+    }
+  }
+
+
 }
 
 class FileInfoInserter extends DatabaseAccessActor with ActorLogging{
@@ -22,7 +38,7 @@ class FileInfoInserter extends DatabaseAccessActor with ActorLogging{
   implicit val executionContext = context.system.dispatcher
 
   //defined in DatabaseAccessActor
-  val connPoolActorRef = context.actorSelection("/ConnPoolActor")
+  val connPoolActorRef = context.actorSelection("../ConnPoolActor")
   val timeout = 10.seconds
   val queue = new mutable.Queue[FileInfo]()
   def receive = {
@@ -36,65 +52,31 @@ class FileInfoInserter extends DatabaseAccessActor with ActorLogging{
     case RetrievedConnection(_, conn) =>
       //pop out the info that need to be stored
       if(!queue.isEmpty){
+
         val fileInfo = queue.dequeue()
 
+        //insert it into database async via future
+        val result:Future[Int] = Future( TryWith(conn)(fileInfo.insert).getOrElse(-1) )
 
-        val result:Future[Int] = Future{
-          //wrap it into future so that it don't block
-
-          try{
-            //to protect SQL insertion
-            autoClose(conn){
-              conn_ =>
-                //prepare statement
-                autoClose(conn.prepareStatement("INSERT INTO offlinefile (hash, size, name) VALUES (?, ?, ?)")){
-                  stmt =>
-                    stmt.setString(1,fileInfo.hash)
-                    stmt.setInt(2,fileInfo.size)
-                    stmt.setString(3, fileInfo.name)
-
-                    //insert
-                    stmt.executeUpdate()
-                }
-            }
-          }
-          catch{
-            case e1: SQLException =>
-              log.error("SQL Insertion Error,SQLException: " + e1.getMessage +
-                "|SQLState: " + e1.getSQLState +
-                "|VendorError: " + e1.getErrorCode)
-              -1
-            case _ => log.error("Unknown SQL error")
-              -1
-          }
-
-        }
-
+        //logging
         result.onComplete{
           case Success(code) =>
             if(code == -1){
               log.error("SQL execution error, the file information is not stored")
 
+            }else{
+              log.info("Insert successfully")
             }
           case Failure(f) =>
             log.error("Unknowned Error During executing SQL")
         }
 
-
-
       }
       else
       {
+        //close the connection if nothing is in the queue
         conn.close()
       }
-
-
-
-
-
-
-
-
 
 
   }
