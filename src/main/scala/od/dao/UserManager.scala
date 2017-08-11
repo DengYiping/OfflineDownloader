@@ -20,12 +20,13 @@ object UserManager{
         false
       else if(password.length > 30 || password.length < 5)
         false
-      else if(!e_mail.contains("@") || e_mail.length < 5 || e_mail.length > 20)
+      else if(!e_mail.contains("@") || e_mail.length < 5 || e_mail.length > 40)
         false
       else
         true
     }
   }
+
   case class LoginRequest(username:String, password_hash:String){
     /*
     * Check if the parameter passed in is acceptable
@@ -60,16 +61,15 @@ class UserManager extends DatabaseAccessActor with ActorLogging{
 
   def receive = {
 
-
-
     case add_user: AddUser =>
       if (add_user.isValid) {
         existUser(add_user.username) flatMap {
           case true =>
             Future(AddUserResponse(false))
           case false =>
-            withPreparedStatement("INSERT INTO user (username, password, e_mail) VALUES (?, ?)"){
+            withPreparedStatement("INSERT INTO user (username, password, e_mail) VALUES (?, ?, ?)"){
               stmt =>
+
                 stmt.setString(1, add_user.username)
                 stmt.setString(2, SHA1Hasher(add_user.password))
                 stmt.setString(3, add_user.e_mail)
@@ -100,7 +100,6 @@ class UserManager extends DatabaseAccessActor with ActorLogging{
             }
         } recover {case e: Exception => LoginResponse(false)} pipeTo sender()
       }
-
 
 
     case _ =>

@@ -27,7 +27,8 @@ trait DatabaseAccessActor extends Actor{
   def withPreparedStatement[T](prep_statement:String)(f: (PreparedStatement) => T)(implicit executionContext: ExecutionContext):Future[T] = {
     askForConn(1).map{
       x => autoClose(x.conn){
-        conn => autoClose(conn.prepareStatement(prep_statement))(f)
+        conn =>
+          autoClose(conn.prepareStatement(prep_statement))(f)
       }
     }
   }

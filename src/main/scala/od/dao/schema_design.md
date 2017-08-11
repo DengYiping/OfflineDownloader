@@ -16,6 +16,10 @@ CREATE TABLE `offlinefile` (`id` INTEGER AUTO_INCREMENT PRIMARY KEY,
  `size` INTEGER,
  `name` VARCHAR(100),
  `create_time` TIMESTAMP DEFAULT NOW());
+ CREATE TABLE `user` (`id` INTEGER AUTO_INCREMENT PRIMARY KEY,
+ `username` VARCHAR(20) NOT NULL,
+ `password` CHAR(40) NOT NULL,
+ `e_mail` VARCHAR(40) NOT NULL);
 ```
 
 
